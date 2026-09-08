@@ -1,1 +1,471 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Padel Draw</title>
+<style>
+  :root{
+    --court:#0d2f3a;
+    --court-line:#f2efe4;
+    --court-deep:#082129;
+    --sand:#e7b567;
+    --sand-deep:#b3873f;
+    --ink:#eef6f3;
+    --ink-dim:#a9c4c3;
+    --net:#0a1e24;
+    --font-display: 'Arial Narrow', 'Helvetica Neue Condensed', sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at top, #123f4d 0%, var(--court) 55%, var(--court-deep) 100%);
+    color: var(--ink);
+    font-family: var(--font-body);
+    padding: 0 0 40px 0;
+  }
+
+  header{
+    padding: 28px 20px 18px 20px;
+    border-bottom: 2px solid rgba(242,239,228,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  header::before{
+    content:"";
+    position:absolute;
+    top:-10px; right:16px;
+    width: 70px; height: 90px;
+    border: 2px solid rgba(242,239,228,0.18);
+    border-bottom: none;
+  }
+  header::after{
+    content:"";
+    position:absolute;
+    top:-10px; right:44px;
+    width: 2px; height: 90px;
+    background: rgba(242,239,228,0.18);
+  }
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--sand);
+    text-transform: uppercase;
+    margin: 0 0 6px 0;
+  }
+  h1{
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: 0.5px;
+    margin: 0;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .sub{
+    color: var(--ink-dim);
+    font-size: 13px;
+    margin-top: 6px;
+    max-width: 32ch;
+  }
+
+  main{ padding: 20px; max-width: 520px; margin: 0 auto; }
+
+  .card{
+    background: rgba(242,239,228,0.05);
+    border: 1px solid rgba(242,239,228,0.15);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 18px;
+  }
+
+  .roster-count{
+    display:flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+  }
+  .roster-count .label{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+  }
+  .roster-count .num{
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--sand);
+    font-weight: 700;
+  }
+
+  .input-row{ display:flex; gap: 8px; }
+  input[type=text]{
+    flex:1;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(242,239,228,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--ink);
+    font-size: 16px;
+    font-family: var(--font-body);
+  }
+  input[type=text]:focus{ outline: none; border-color: var(--sand); }
+  input[type=text]::placeholder{ color: #6f8d8a; }
+
+  button{ font-family: var(--font-body); border: none; cursor: pointer; }
+
+  .btn-add{
+    background: var(--sand);
+    color: #2b1c05;
+    font-weight: 700;
+    font-size: 20px;
+    width: 46px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .btn-add:active{ background: var(--sand-deep); }
+
+  .players{ margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip{
+    display:flex; align-items:center; gap:6px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(242,239,228,0.15);
+    border-radius: 20px;
+    padding: 6px 6px 6px 12px;
+    font-size: 14px;
+  }
+  .chip .num{ font-family: var(--font-mono); color: var(--sand); font-size: 12px; }
+  .chip button{
+    background: transparent; color: var(--ink-dim);
+    font-size: 15px; line-height: 1; width: 22px; height: 22px; border-radius: 50%;
+  }
+  .chip button:active{ background: #a13a2f; color: var(--ink); }
+
+  .empty-note{ color: var(--ink-dim); font-size: 13px; font-style: italic; padding: 6px 2px; }
+
+  .save-load-row{
+    display:flex; gap: 8px; margin-top: 12px;
+  }
+  .btn-secondary{
+    flex:1;
+    background: transparent;
+    border: 1px solid rgba(242,239,228,0.3);
+    color: var(--ink);
+    font-size: 13px;
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 8px;
+    border-radius: 8px;
+  }
+  .btn-secondary:active{ background: rgba(242,239,228,0.1); border-color: var(--sand); }
+  .save-note{
+    font-size: 12px;
+    color: var(--sand);
+    margin: 8px 2px 0 2px;
+    min-height: 14px;
+  }
+
+  .btn-shuffle{
+    width: 100%; padding: 16px; border-radius: 10px;
+    background: var(--sand); color: #2b1c05;
+    font-family: var(--font-display); font-weight: 800; font-size: 18px;
+    letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;
+    transition: transform 0.08s ease;
+  }
+  .btn-shuffle:active{ transform: scale(0.98); background: var(--sand-deep); }
+  .btn-shuffle:disabled{ background: rgba(242,239,228,0.12); color: var(--ink-dim); cursor: not-allowed; }
+
+  .hint{ text-align:center; font-size: 12px; color: var(--ink-dim); margin-top: 10px; font-family: var(--font-mono); }
+
+  .results{ margin-top: 22px; }
+
+  .court{
+    border: 1px solid rgba(242,239,228,0.18);
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    animation: dealIn 0.4s ease both;
+    background: var(--court-deep);
+  }
+  .court-head{
+    background: linear-gradient(90deg, var(--sand-deep), var(--sand));
+    color: #2b1c05;
+    padding: 10px 14px;
+    display:flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--font-display); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .court-head .c-name{ font-weight: 800; font-size: 16px; }
+  .court-head .c-meta{ font-family: var(--font-mono); font-size: 11px; letter-spacing: 1px; }
+
+  .vs-wrap{
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: stretch;
+  }
+  .team{ padding: 14px; }
+  .team-label{
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .team.t1 .team-label{ color: #7fd9c4; }
+  .team.t2 .team-label{ color: #e08f8f; }
+  .team ol{ margin:0; padding:0; list-style: none; }
+  .team li{
+    display:flex; align-items:center; gap: 8px; padding: 4px 0; font-size: 14px;
+  }
+  .team li .n{ font-family: var(--font-mono); font-size: 11px; width: 14px; color: var(--ink-dim); }
+
+  .net{
+    width: 3px;
+    background: repeating-linear-gradient(
+      to bottom, var(--net), var(--net) 6px, transparent 6px, transparent 12px
+    );
+    margin: 10px 0;
+  }
+
+  @keyframes dealIn{
+    from{ opacity:0; transform: translateY(10px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .stray{
+    border: 1px dashed rgba(242,239,228,0.3);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--ink-dim);
+    font-size: 13px;
+  }
+  .stray b{ color: var(--sand); }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Padel Draw</p>
+  <h1>Court Shuffle</h1>
+  <p class="sub">Add every player, then shuffle. 4 players per court, split into Team 1 vs Team 2.</p>
+</header>
+
+<main>
+  <div class="card">
+    <div class="roster-count">
+      <span class="label">Roster</span>
+      <span class="num" id="rosterCount">0</span>
+    </div>
+    <div class="input-row">
+      <input type="text" id="nameInput" placeholder="Player name" maxlength="24" autocomplete="off">
+      <button class="btn-add" id="addBtn" aria-label="Add player">+</button>
+    </div>
+    <div class="players" id="playerList"></div>
+    <p class="empty-note" id="emptyNote">No players yet — add your first one above.</p>
+    <div class="save-load-row">
+      <button class="btn-secondary" id="saveBtn">Save roster</button>
+      <button class="btn-secondary" id="loadBtn">Load roster</button>
+      <input type="file" id="fileInput" accept="application/json" hidden>
+    </div>
+    <p class="save-note" id="saveNote"></p>
+  </div>
+
+  <button class="btn-shuffle" id="shuffleBtn" disabled>Shuffle the Courts</button>
+  <p class="hint" id="reqHint">need at least 4 players for one court</p>
+
+  <div class="results" id="results"></div>
+</main>
+
+<script>
+  const nameInput = document.getElementById('nameInput');
+  const addBtn = document.getElementById('addBtn');
+  const playerList = document.getElementById('playerList');
+  const rosterCount = document.getElementById('rosterCount');
+  const emptyNote = document.getElementById('emptyNote');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const reqHint = document.getElementById('reqHint');
+  const results = document.getElementById('results');
+
+  let players = [];
+
+  function addPlayer(){
+    const name = nameInput.value.trim();
+    if(!name) return;
+    players.push(name);
+    nameInput.value = '';
+    render();
+    nameInput.focus();
+  }
+
+  function removePlayer(idx){
+    players.splice(idx, 1);
+    render();
+  }
+
+  function render(){
+    playerList.innerHTML = '';
+    emptyNote.style.display = players.length ? 'none' : 'block';
+
+    players.forEach((name, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `<span class="num">${String(idx+1).padStart(2,'0')}</span><span>${escapeHtml(name)}</span>`;
+      const rm = document.createElement('button');
+      rm.textContent = '×';
+      rm.setAttribute('aria-label', 'Remove ' + name);
+      rm.onclick = () => removePlayer(idx);
+      chip.appendChild(rm);
+      playerList.appendChild(chip);
+    });
+
+    rosterCount.textContent = players.length;
+    shuffleBtn.disabled = players.length < 4;
+    reqHint.textContent = players.length < 4
+      ? `need at least 4 players for one court — ${4 - players.length} more`
+      : `${players.length} players on the roster — ready to draw`;
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function shuffleArray(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function draw(){
+    const shuffled = shuffleArray(players);
+
+    const courts = [];
+    for(let i = 0; i < shuffled.length; i += 4){
+      courts.push(shuffled.slice(i, i + 4));
+    }
+
+    renderResults(courts);
+  }
+
+  function renderResults(courts){
+    results.innerHTML = '';
+
+    courts.forEach((courtPlayers, cIdx) => {
+      const courtEl = document.createElement('div');
+      courtEl.className = 'court';
+      courtEl.style.animationDelay = (cIdx * 0.08) + 's';
+
+      const isFull = courtPlayers.length === 4;
+
+      if(isFull){
+        const team1 = courtPlayers.slice(0, 2);
+        const team2 = courtPlayers.slice(2, 4);
+        courtEl.innerHTML = `
+          <div class="court-head">
+            <span class="c-name">Court ${cIdx + 1}</span>
+            <span class="c-meta">TEAM 1 VS TEAM 2</span>
+          </div>
+          <div class="vs-wrap">
+            <div class="team t1">
+              <div class="team-label">Team 1</div>
+              <ol>${team1.map((n,i)=>`<li><span class="n">${i+1}</span>${escapeHtml(n)}</li>`).join('')}</ol>
+            </div>
+            <div class="net"></div>
+            <div class="team t2">
+              <div class="team-label">Team 2</div>
+              <ol>${team2.map((n,i)=>`<li><span class="n">${i+1}</span>${escapeHtml(n)}</li>`).join('')}</ol>
+            </div>
+          </div>
+        `;
+      } else {
+        courtEl.innerHTML = `
+          <div class="court-head">
+            <span class="c-name">Waiting Bench</span>
+            <span class="c-meta">${courtPlayers.length} LEFT OVER</span>
+          </div>
+          <div style="padding:14px;">
+            <ol>${courtPlayers.map((n,i)=>`<li style="list-style:none;padding:4px 0;font-size:14px;"><span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-dim);margin-right:8px;">${i+1}</span>${escapeHtml(n)}</li>`).join('')}</ol>
+            <p style="color:var(--ink-dim);font-size:12px;margin:6px 0 0 0;">Not enough for a full court this round.</p>
+          </div>
+        `;
+      }
+
+      results.appendChild(courtEl);
+    });
+  }
+
+  const saveBtn = document.getElementById('saveBtn');
+  const loadBtn = document.getElementById('loadBtn');
+  const fileInput = document.getElementById('fileInput');
+  const saveNote = document.getElementById('saveNote');
+
+  function flashNote(msg){
+    saveNote.textContent = msg;
+    setTimeout(() => { if(saveNote.textContent === msg) saveNote.textContent = ''; }, 3000);
+  }
+
+  function saveRoster(){
+    if(players.length === 0){
+      flashNote('Add some players first.');
+      return;
+    }
+    const data = JSON.stringify({ players }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `padel-roster-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    flashNote('Roster saved — check your downloads.');
+  }
+
+  function loadRoster(file){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if(!Array.isArray(data.players)) throw new Error('bad format');
+        players = data.players.filter(p => typeof p === 'string' && p.trim());
+        render();
+        flashNote(`Loaded ${players.length} players.`);
+      } catch (err){
+        flashNote('Could not read that file — is it a saved roster?');
+      }
+    };
+    reader.onerror = () => flashNote('Could not read that file.');
+    reader.readAsText(file);
+  }
+
+  saveBtn.addEventListener('click', saveRoster);
+  loadBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file) loadRoster(file);
+    fileInput.value = '';
+  });
+
+  addBtn.addEventListener('click', addPlayer);
+  nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') addPlayer(); });
+  shuffleBtn.addEventListener('click', draw);
+
+  render();
+</script>
+</body>
+</html>
