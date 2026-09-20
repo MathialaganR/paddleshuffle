@@ -518,3 +518,145 @@
   }
 
   function startRotation(){
+    totalBlocks = parseInt(blockCountInput.value, 10) || 6;
+    unlimited = unlimitedCheck.checked;
+    playMs = Math.max(1, parseInt(playMinInput.value, 10) || 18) * 60000;
+    restMs = Math.max(0, parseInt(restMinInput.value, 10) || 2) * 60000;
+    pairHistory = {};
+    currentBlock = 1;
+    currentDraw = generateDraw([]);
+    recordHistory(currentDraw.courts);
+    nextDraw = null;
+    rotState = 'playing';
+    phaseEndTime = Date.now() + playMs;
+    renderRotationView();
+    updatePhaseUI();
+    startTicking();
+  }
+
+  function beginRestPhase(){
+    // generate next draw now so players can see where to go while resting
+    nextDraw = generateDraw(currentDraw.bench);
+    rotState = 'resting';
+    phaseEndTime = Date.now() + restMs;
+    renderRotationView();
+    updatePhaseUI();
+  }
+
+  function beginNextPlayPhase(){
+    currentDraw = nextDraw;
+    nextDraw = null;
+    recordHistory(currentDraw.courts);
+    currentBlock += 1;
+    rotState = 'playing';
+    phaseEndTime = Date.now() + playMs;
+    renderRotationView();
+    updatePhaseUI();
+  }
+
+  function finishRotation(){
+    rotState = 'finished';
+    clearInterval(tickHandle);
+    tickHandle = null;
+    phaseLabel.className = 'phase-label done';
+    phaseLabel.textContent = 'Session complete';
+    clockEl.textContent = '🎾';
+    blockProgress.textContent = `Played ${currentBlock} block${currentBlock === 1 ? '' : 's'}`;
+    nextTag.hidden = true;
+    setControlsForState();
+  }
+
+  function onPhaseEnd(){
+    beep();
+    if(rotState === 'playing'){
+      const isLastBlock = !unlimited && currentBlock >= totalBlocks;
+      if(isLastBlock){
+        finishRotation();
+        return;
+      }
+      if(restMs <= 0){
+        beginNextPlayPhase();
+      } else {
+        beginRestPhase();
+      }
+    } else if(rotState === 'resting'){
+      beginNextPlayPhase();
+    }
+  }
+
+  function updatePhaseUI(){
+    if(rotState === 'playing'){
+      phaseLabel.className = 'phase-label play';
+      phaseLabel.textContent = 'Playing';
+    } else if(rotState === 'resting'){
+      phaseLabel.className = 'phase-label rest';
+      phaseLabel.textContent = 'Changeover — rest';
+    } else if(rotState === 'paused'){
+      phaseLabel.className = 'phase-label idle';
+      phaseLabel.textContent = `Paused (${pausedFromState === 'playing' ? 'playing' : 'resting'})`;
+    } else {
+      phaseLabel.className = 'phase-label idle';
+      phaseLabel.textContent = 'Ready';
+    }
+    const blockLabel = unlimited ? `Block ${currentBlock} (no limit)` : `Block ${currentBlock} of ${totalBlocks}`;
+    blockProgress.textContent = (rotState === 'idle') ? '—' : blockLabel;
+    setControlsForState();
+  }
+
+  function tick(){
+    if(rotState !== 'playing' && rotState !== 'resting') return;
+    const remaining = phaseEndTime - Date.now();
+    clockEl.textContent = fmtClock(remaining);
+    if(remaining <= 0) onPhaseEnd();
+  }
+
+  function startTicking(){
+    if(tickHandle) clearInterval(tickHandle);
+    tick();
+    tickHandle = setInterval(tick, 250);
+  }
+
+  function pauseRotation(){
+    if(rotState === 'playing' || rotState === 'resting'){
+      pausedRemainingMs = phaseEndTime - Date.now();
+      pausedFromState = rotState;
+      rotState = 'paused';
+      updatePhaseUI();
+    } else if(rotState === 'paused'){
+      rotState = pausedFromState;
+      phaseEndTime = Date.now() + pausedRemainingMs;
+      updatePhaseUI();
+    }
+  }
+
+  function stopRotation(){
+    clearInterval(tickHandle);
+    tickHandle = null;
+    rotState = 'idle';
+    currentBlock = 0;
+    currentDraw = null;
+    nextDraw = null;
+    pairHistory = {};
+    phaseLabel.className = 'phase-label idle';
+    phaseLabel.textContent = 'Ready';
+    clockEl.textContent = '00:00';
+    blockProgress.textContent = '—';
+    nextTag.hidden = true;
+    rotationResults.innerHTML = '';
+    updateRotationAvailability();
+    setControlsForState();
+  }
+
+  startBtn.addEventListener('click', startRotation);
+  pauseBtn.addEventListener('click', pauseRotation);
+  stopBtn.addEventListener('click', stopRotation);
+  unlimitedCheck.addEventListener('change', () => {
+    blockCountInput.disabled = unlimitedCheck.checked || rotState !== 'idle';
+  });
+
+  /* ---------- init ---------- */
+  renderRoster();
+  updatePhaseUI();
+</script>
+</body>
+</html>
